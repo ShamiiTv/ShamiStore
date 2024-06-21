@@ -201,3 +201,38 @@ footer a:hover {
     justify-content: space-between;
     margin: 2vw;
 }
+
+
+.navbar-text{
+    color: white !important;
+    padding-top: 0.9rem !important;
+}
+
+.sesion{
+    display: flex;
+    flex-direction: row;
+    padding-left: 20vw;
+}
+
+@media (max-width: 1240px) {
+    .sesion{
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 992px) {
+    .sesion{
+        flex-direction: column;
+    }
+    .navbar-text{
+        padding-top: 0 !important;
+        align-self: center;
+    }
+}
+
+.btn-primary {
+    background-color: #7c3ee5 !important;
+    border: none !important;
+}
+
+

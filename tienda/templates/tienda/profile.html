@@ -1,0 +1,21 @@
+{% extends "tienda/base.html" %}
+
+{% block title %}Shami Store - Perfil{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h1>Perfil de {{ user.username }}</h1>
+            <p>Email: {{ user.email }}</p>
+        </div>
+        <div class="col-md-6">
+            <h1>Direcciones</h1>
+            <p>Dirección de facturación: {{ user.billing_address }}</p>
+            <p>Dirección de envío: {{ user.shipping_address }}</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

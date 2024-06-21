@@ -6,34 +6,46 @@ document.addEventListener("DOMContentLoaded", function () {
     var mensajeTextarea = document.getElementById("mensaje");
     var enviarBtn = document.getElementById("enviarBtn");
 
-    nombreInput.addEventListener("input", function () {
-        validarNombre();
-    });
+    if (nombreInput) {
+        nombreInput.addEventListener("input", function () {
+            validarNombre();
+        });
+    }
 
-    emailInput.addEventListener("input", function () {
-        validarEmail();
-    });
+    if (emailInput) {
+        emailInput.addEventListener("input", function () {
+            validarEmail();
+        });
+    }
 
-    celularInput.addEventListener("input", function () {
-        validarCelular();
-    });
+    if (celularInput) {
+        celularInput.addEventListener("input", function () {
+            validarCelular();
+        });
+    }
 
-    asuntoSelect.addEventListener("change", function () {
-        validarAsunto();
-    });
+    if (asuntoSelect) {
+        asuntoSelect.addEventListener("change", function () {
+            validarAsunto();
+        });
+    }
 
-    mensajeTextarea.addEventListener("input", function () {
-        validarMensaje();
-    });
+    if (mensajeTextarea) {
+        mensajeTextarea.addEventListener("input", function () {
+            validarMensaje();
+        });
+    }
 
-    enviarBtn.addEventListener("click", function () {
-        validarFormulario();
-    });
+    if (enviarBtn) {
+        enviarBtn.addEventListener("click", function () {
+            validarFormulario();
+        });
+    }
 
     function validarNombre() {
         var nombre = nombreInput.value.trim();
         var nombreError = document.getElementById("nombreError");
-    
+
         if (/\d/.test(nombre)) {
             nombreInput.value = nombre.replace(/\d/g, '');
             nombreError.textContent = "El nombre no puede contener números.";
@@ -68,7 +80,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function validarCelular() {
         var celular = celularInput.value.trim();
         var celularError = document.getElementById("celularError");
-    
+
         if (!/^\+?[0-9]*$/.test(celular)) {
             celularInput.value = celular.replace(/\D/g, '').replace(/^(\+).*\+/, '$1');
             celularError.textContent = "El número de celular no es válido.";
@@ -136,25 +148,39 @@ function valorDolar() {
         })
         .then(function(dailyIndicators) {
             preciodolar = dailyIndicators.dolar.valor;
-            mostrarProductosCarrito();
+            // mostrarProductosCarrito();
         })
         .catch(function(error) {
             console.log('Error en la solicitud:', error);
         });
 }
 
+// Función para obtener y mostrar el contador del carrito actualizado
 function actualizarContadorCarrito() {
-    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    let contador = document.querySelector('.carro span');
-
-    if (contador) {
-        contador.textContent = carrito.length;
-    } else {
-        document.querySelector('.carro').innerHTML += `<span class="badge bg-primary">${carrito.length}</span>`;
-    }
+    fetch('/obtener-cantidad-carrito/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al obtener la cantidad del carrito');
+            }
+            return response.json();
+        })
+        .then(data => {
+            let contadorElemento = document.querySelector('.contador-carrito');
+            if (contadorElemento) {
+                contadorElemento.textContent = data.cantidad_carrito;
+            } else {
+                console.error('Elemento contador no encontrado');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
 
-actualizarContadorCarrito();
+// Llamar a actualizarContadorCarrito() al cargar la página o al realizar acciones relevantes
+document.addEventListener('DOMContentLoaded', () => {
+    actualizarContadorCarrito();
+});
 
 window.onscroll = function() {
     scrollFunction();
@@ -168,113 +194,177 @@ function scrollFunction() {
     }
 }
 
-document.getElementById("volverArriba").addEventListener("click", function() {
+document.getElementById("volverArriba")?.addEventListener("click", function() {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
 });
 
-function agregarAlCarrito(id,nombre, precio,precioDolar, imagen) {
-    $('#exampleModal').modal('show');
-    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    let productoExistente = carrito.find(producto => producto.nombre === nombre);
-
-    if (productoExistente) {
-        productoExistente.cantidad = (productoExistente.cantidad || 1) + 1;
-    } else {
-        carrito.push({ id: id, nombre: nombre, precio: precio, precioDolar: precioDolar, imagen: imagen, cantidad: 1 });
-    }
-
-    localStorage.setItem('carrito', JSON.stringify(carrito));
-    actualizarContadorCarrito();
-    mostrarProductosCarrito();
-}
-
-window.onload = function() {
-    valorDolar();
-};
-
-function mostrarProductosCarrito() {
-    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    let listaProductos = document.getElementById('lista-productos');
-    let totalCarritoCLP = document.getElementById('total-carrito');
-    let totalCarritoUSD = document.getElementById('total-carrito2');
-    let totalCLP = 0;
-    let totalUSD = 0;
-
-    listaProductos.innerHTML = '';
-
-    carrito.forEach(function(producto, index) {
-        producto.cantidad = producto.cantidad || 1;
-
-        let divProducto = document.createElement('div');
-        divProducto.classList.add('product');
-        console.log(producto);
-
-        // Formatear el precio en CLP
-        let precioCLPFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(producto.precio);
-        
-        divProducto.innerHTML = `
-    <img src="/static/${producto.imagen}" alt="${producto.imagen}">
-    <div class="product-details">
-        <h6>ID Producto : ${producto.id}</h6>
-        <h2>${producto.nombre}</h2>
-        <p>Precio: ${precioCLPFormateado}</p>
-        <p>Precio USD: ${producto.precioDolar}</p>
-        <p>Cantidad: ${producto.cantidad}</p>
-        <button onclick="eliminarProducto(${index})" class="btn btn-danger">Eliminar</button>
-        <button onclick="aumentarCantidad(${index})" class="btn btn-primary">+</button>
-        <button onclick="disminuirCantidad(${index})" class="btn btn-primary">-</button>
-    </div>
-`;
-        listaProductos.appendChild(divProducto);
-
-        // Calcular y sumar el total en CLP y USD
-        totalCLP += producto.precio * producto.cantidad;
-        totalUSD += producto.precioDolar * producto.cantidad;
+function agregarAlCarrito(id) {
+    fetch(`/agregar/${id}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    }).then(response => {
+        if (response.ok) {
+            // Mostrar la modal después de que la solicitud sea exitosa
+            $('#exampleModal').modal('show');
+            // Actualizar el contador del carrito después de agregar el producto
+            actualizarContadorCarrito();
+        } else {
+            console.error('Error al agregar al carrito');
+        }
+    }).catch(error => {
+        console.error('Error en la solicitud:', error);
     });
-    
-    // Mostrar el total del carrito en CLP y USD
-    totalCarritoCLP.textContent = "Total CLP: " + new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalCLP);
-    totalCarritoUSD.textContent = "Total USD: " + new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalUSD);
 }
 
-function eliminarProducto(index) {
-    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    carrito.splice(index, 1);
-    localStorage.setItem('carrito', JSON.stringify(carrito));
-    mostrarProductosCarrito();
-    actualizarContadorCarrito();
-}
-
-function aumentarCantidad(index) {
-    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    let encontrado = false;
-    carrito.forEach(function(producto) {
-        if (producto.nombre === carrito[index].nombre) {
-            producto.cantidad = (producto.cantidad || 1) + 1;
-            encontrado = true;
+function eliminarProducto(id) {
+    fetch(`/eliminar/${id}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    }).then(response => {
+        if (response.ok) {
+            actualizarContadorCarrito();
+            window.location.reload();
+        } else {
+            console.error('Error al eliminar del carrito');
         }
     });
-    if (!encontrado) {
-        carrito[index].cantidad = (carrito[index].cantidad || 1) + 1;
+}
+function formatoPesosChilenos(numero) {
+    return new Intl.NumberFormat('es-CL', {
+        style: 'currency',
+        currency: 'CLP'
+    }).format(numero);
+}
+
+function limpiarCarrito() {
+    fetch('/limpiar/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    }).then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            console.error('Error al limpiar el carrito');
+        }
+    });
+}
+
+function sumarCantidad(itemId, accion) {
+    let cantidad = 0;
+
+    if (accion === 'sumar') {
+        console.log(accion)
+        cantidad = 1;
     }
-    localStorage.setItem('carrito', JSON.stringify(carrito));
-    mostrarProductosCarrito();
+
+    fetch(`/sumar-cantidad/${itemId}/${cantidad}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cantidad }) 
+      })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al actualizar la cantidad del producto');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.cantidad_actualizada === 0) {
+            document.getElementById(`item-${itemId}`).remove();
+        } else {
+            let cantidadElemento = document.getElementById(`cantidad-${itemId}`);
+            if (cantidadElemento) {
+                cantidadElemento.textContent = data.cantidad_actualizada;
+            } else {
+                console.error('Elemento de cantidad no encontrado');
+            }
+        }
+
+        document.getElementById('total-carrito').textContent = data.total_clp;
+        document.getElementById('total-carrito2').textContent = data.total_usd;
+
+        actualizarContadorCarrito();
+    })
+    .catch(error => console.error('Error:', error));
 }
 
-function disminuirCantidad(index) {
-    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    if (carrito[index].cantidad > 1) {
-        carrito[index].cantidad--;
-        localStorage.setItem('carrito', JSON.stringify(carrito));
-        mostrarProductosCarrito();
+function restarCantidad(itemId, accion) {
+    let cantidad = 0;
+
+    if (accion === 'restar') {
+        console.log(accion);
+        cantidad = 1; // Usamos 1 para indicar que queremos restar 1
     }
+
+    fetch(`/restar-cantidad/${itemId}/${cantidad}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al actualizar la cantidad del producto');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data); // Agregar esto para ver los datos recibidos
+
+        if (data.cantidad_actualizada === 0) {
+            const itemElement = document.getElementById(`item-${itemId}`);
+            if (itemElement) {
+                itemElement.remove();
+            } else {
+                console.error('Elemento de item no encontrado');
+            }
+        } else {
+            let cantidadElemento = document.getElementById(`cantidad-${itemId}`);
+            if (cantidadElemento) {
+                cantidadElemento.textContent = data.cantidad_actualizada;
+            } else {
+                console.error('Elemento de cantidad no encontrado');
+            }
+        }
+
+        const totalCarrito = document.getElementById('total-carrito');
+        const totalCarrito2 = document.getElementById('total-carrito2');
+
+        if (totalCarrito && totalCarrito2) {
+            totalCarrito.textContent = data.total_clp;
+            totalCarrito2.textContent = data.total_usd;
+        } else {
+            console.error('Elemento de total del carrito no encontrado');
+        }
+
+        actualizarContadorCarrito();
+    })
+    .catch(error => console.error('Error:', error));
 }
 
-function limpiarCarrito() {      
-    localStorage.removeItem('carrito');
-    mostrarProductosCarrito();
-    actualizarContadorCarrito();
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
-document.querySelector('.limpiar-carrito').addEventListener('click', limpiarCarrito);

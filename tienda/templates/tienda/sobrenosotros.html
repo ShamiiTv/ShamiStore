@@ -25,7 +25,21 @@
                         <a class="nav-link" href="{% url 'monitores' %}">Monitores</a>
                         <a class="nav-link" href="{% url 'teclados' %}">Teclados</a>
                         <a class="nav-link" href="{% url 'mouses' %}">Mouses</a>
-                        <a class="nav-link carro" href="{% url 'carrito' %}"><img src="{% static './Images/Iconos/Fast Cart.png' %}" alt="Carrito"></a>
+                        <div class="sesion">
+                            {% if user.is_authenticated %}
+                            <span class="navbar-text">
+                                Bienvenido, {{ user.username }} |
+                            </span>
+                            <a class="nav-link" href="{% url 'profile' %}"><button class="btn btn-primary">Perfil</button></a>
+                            <a class="nav-link" href="{% url 'logout' %}"><button class="btn btn-primary">Cerrar Sesion</button></a>
+                        {% else %}
+                            <a class="nav-link" href="{% url 'login' %}"><button class="btn btn-primary"> Iniciar Sesion </button></a>
+                            <a class="nav-link" href="{% url 'registro' %}"><button class="btn btn-primary">Registrarse</button></a>
+                        {% endif %}
+                        </div>
+                        <a class="nav-link carro" href="{% url 'carrito' %}"><img src="{% static './Images/Iconos/Fast Cart.png' %}" alt="Carrito">
+                        <span class="contador-carrito badge" style="background-color: #7c3ee5;">0</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -50,6 +64,10 @@
         </div>
     </div>
 
+
+    <a href="#" class="volver-arriba" id="volverArriba"><img src="{% static './Images/Iconos/ScrollUp.png'%}" alt="Volver Arriba"></a>
+
+    
     <footer>
         <div class="container text-center">
             <img src="{% static './Images/Iconos/Logo.png'%}" alt="Shami Store" class="logo">

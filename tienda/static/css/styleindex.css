@@ -23,6 +23,7 @@ body {
     background-repeat: repeat; 
     background-size: cover;
     background-position: center center; 
+    padding-right: 0 !important;
 }
 
 footer {
@@ -156,6 +157,7 @@ footer a:hover {
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+    margin: 3%;
 }
 
 .formulario-contacto h2 {
@@ -296,13 +298,82 @@ p{
     color: green;
 }
 
-.container{
-    margin-top: 5%;
-    margin-bottom: 5%;
+/* Borrar cualquier cosa*/
+.container {
+    max-width: 100%;
+    margin: 20px auto;
+    background-color: #2b2b2b !important; 
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #ffffff; 
 }
+
+
 .barralateral {
     display: flex;
     flex-direction: column;
     background-color: #2b2b2b;
     left: 0;
+}
+
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important; 
+}
+
+
+.navbar-text{
+    color: white !important;
+    padding-top: 0.9rem !important;
+}
+
+.sesion{
+    display: flex;
+    flex-direction: row;
+    padding-left: 20vw;
+}
+
+@media (max-width: 1240px) {
+    .sesion{
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 992px) {
+    .sesion{
+        flex-direction: column;
+    }
+    .navbar-text{
+        padding-top: 0 !important;
+        align-self: center;
+    }
+}
+
+.card-body{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.form-control {
+    border-radius: 10px; /* Bordes redondeados para los inputs */
+}
+
+.form{
+    display: flex;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.product{
+    display: flex;
+    flex-direction: column;
+    margin: 1vw;
+    padding: 1vw;
+    border-radius: 10px;
+    background-color: #302f2f;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
 }
