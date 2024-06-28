@@ -2,7 +2,7 @@ from django.shortcuts import render,redirect
 from django.contrib.auth import login,logout,authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
-from .models import Productos,Carrito,ItemCarrito,Solicitud
+from .models import Productos,Carrito,ItemCarrito,Solicitud,Compra,ItemCompra
 from django.shortcuts import get_object_or_404
 from .forms import *
 from django.http import JsonResponse
@@ -10,10 +10,12 @@ from django.views.decorators.http import require_http_methods
 from django.utils.formats import localize
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 
 @login_required
 def profile(request):
-    return render(request, 'tienda/profile.html')
+    compras = Compra.objects.filter(usuario=request.user).order_by('-fecha')
+    return render(request, 'tienda/profile.html', {'compras': compras})
 
 def registro(request):
     if request.method == "POST":
@@ -110,6 +112,11 @@ def actualizar_cantidad(request, item_id, cantidad):
         return JsonResponse({'error': 'Cantidad no válida'}, status=400)
 
     nueva_cantidad = item.cantidad + cantidad
+
+    # Verificar que la nueva cantidad no exceda el stock disponible
+    if nueva_cantidad > item.producto.stock:
+        return JsonResponse({'error': f'No hay suficiente stock para {item.producto.nombre}. Disponible: {item.producto.stock}'}, status=400)
+    
     if nueva_cantidad < 1:
         item.delete()
         cantidad_actualizada = 0
@@ -201,3 +208,42 @@ def contacto(request):
     # Fetch current user's requests
     solicitudes = Solicitud.objects.filter(user=request.user)
     return render(request, 'tienda/contacto.html', {'form': form, 'solicitudes': solicitudes})
+
+
+@login_required
+def pagar(request):
+    carrito = Carrito.objects.get(usuario=request.user)
+    items = carrito.items.all()
+    errores = []
+
+    # Verificar stock antes de proceder al pago
+    for item in items:
+        if item.cantidad > item.producto.stock:
+            errores.append(f"No hay suficiente stock para {item.producto.nombre}. Disponible: {item.producto.stock}")
+
+    if errores:
+        # Mostrar errores si no hay suficiente stock
+        messages.error(request, ". ".join(errores))
+        return redirect('carrito')
+
+    # Descontar stock y crear la compra
+    total_clp = sum(item.producto.precio * item.cantidad for item in items)
+    total_usd = sum(item.producto.precioDolar * item.cantidad for item in items)
+    compra = Compra.objects.create(usuario=request.user, total_clp=total_clp, total_usd=total_usd)
+    
+    for item in items:
+        producto = item.producto
+        producto.stock -= item.cantidad
+        producto.save()
+        
+        ItemCompra.objects.create(
+            compra=compra,
+            producto=producto,
+            cantidad=item.cantidad,
+            precio_clp=item.producto.precio,
+            precio_usd=item.producto.precioDolar
+        )
+        
+    carrito.items.all().delete()
+    messages.success(request, 'Pago realizado con éxito. Gracias por tu compra!')
+    return redirect('carrito')

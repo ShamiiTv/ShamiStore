@@ -16,6 +16,48 @@
             <p>Dirección de envío: {{ user.shipping_address }}</p>
         </div>
     </div>
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h2>Historial de Compras</h2>
+            {% if compras %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Total CLP</th>
+                        <th>Total USD</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compra in compras %}
+                    <tr>
+                        <td>{{ compra.id }}</td>
+                        <td>{{ compra.fecha }}</td>
+                        <td>${{ compra.total_clp|floatformat:"g" }}</td>
+                        <td>${{ compra.total_usd }}</td>
+                        <td>
+                            <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#detalle-{{ compra.id }}">Ver Detalles</button>
+                        </td>
+                    </tr>
+                    <tr id="detalle-{{ compra.id }}" class="collapse">
+                        <td colspan="5">
+                            <ul>
+                                {% for item in compra.items.all %}
+                                <li>{{ item.cantidad }} x {{ item.producto.nombre }} a CLP ${{ item.precio_clp }} (USD ${{ item.precio_usd }})</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No has realizado ninguna compra aún.</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 {% endblock %}

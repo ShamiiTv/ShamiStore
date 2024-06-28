@@ -173,7 +173,7 @@ function actualizarContadorCarrito() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error: Producto con stock Limitado:', error);
         });
 }
 
@@ -260,7 +260,7 @@ function sumarCantidad(itemId, accion) {
     let cantidad = 0;
 
     if (accion === 'sumar') {
-        console.log(accion)
+        console.log(accion);
         cantidad = 1;
     }
 
@@ -274,7 +274,9 @@ function sumarCantidad(itemId, accion) {
       })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Error al actualizar la cantidad del producto');
+            return response.json().then(data => {
+                throw new Error(data.error || 'Error al actualizar la cantidad del producto');
+            });
         }
         return response.json();
     })
@@ -295,7 +297,7 @@ function sumarCantidad(itemId, accion) {
 
         actualizarContadorCarrito();
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => alert('Error: Producto con stock Limitado', error.message));
 }
 
 function restarCantidad(itemId, accion) {
@@ -303,7 +305,7 @@ function restarCantidad(itemId, accion) {
 
     if (accion === 'restar') {
         console.log(accion);
-        cantidad = 1; // Usamos 1 para indicar que queremos restar 1
+        cantidad = 1;
     }
 
     fetch(`/restar-cantidad/${itemId}/${cantidad}/`, {
@@ -315,12 +317,14 @@ function restarCantidad(itemId, accion) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Error al actualizar la cantidad del producto');
+            return response.json().then(data => {
+                throw new Error(data.error || 'Error al actualizar la cantidad del producto');
+            });
         }
         return response.json();
     })
     .then(data => {
-        console.log('Response data:', data); // Agregar esto para ver los datos recibidos
+        console.log('Response data:', data);
 
         if (data.cantidad_actualizada === 0) {
             const itemElement = document.getElementById(`item-${itemId}`);
@@ -350,7 +354,7 @@ function restarCantidad(itemId, accion) {
 
         actualizarContadorCarrito();
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => alert('Error: Producto con stock Limitado:', error.message));
 }
 
 function getCookie(name) {

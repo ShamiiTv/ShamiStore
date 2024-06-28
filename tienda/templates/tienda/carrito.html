@@ -77,9 +77,20 @@
             </div>
             <form method="post" action="{% url 'limpiar_carrito' %}">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger limpiar-carrito">Limpiar Carrito</button> 
+                {% if total_clp > 0 %}
+                    <button type="submit" class="btn btn-danger limpiar-carrito">Limpiar Carrito</button>
+                {% else %}
+                    <button type="submit" class="btn btn-danger limpiar-carrito" disabled>Limpiar Carrito</button>
+                {% endif %}
             </form>
-            <button type="button" class="btn btn-success pagar">Pagar</button>
+            <form method="post" action="{% url 'pagar' %}">
+                {% csrf_token %}
+                {% if total_clp > 0 %}
+                    <button type="submit" class="btn btn-success pagar">Pagar</button>
+                {% else %}
+                    <button type="submit" class="btn btn-success pagar" disabled>Pagar</button>
+                {% endif %}
+            </form>
         </div>
     </div>
     

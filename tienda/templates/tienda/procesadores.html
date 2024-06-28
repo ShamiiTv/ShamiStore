@@ -11,12 +11,23 @@
                 <img src="{% static producto.SrcImagen %}" class="card-img-top" alt="Producto 1">
                 <div class="card-body">
                     <h5 class="card-title">{{ producto.nombre }}</h5>
-                    <p class="card-text">ID Producto: {{producto.id}} </p>
-                    <p class="card-text">Precio: ${{ producto.precio|floatformat:"g" }} CLP</p>
-                    <p class="card-text">Precio: ${{ producto.precioDolar }} USD</p>
-                    <button type="button" class="btn btn-primary" onclick="agregarAlCarrito('{{ producto.id }}', '{{ producto.nombre }}', '{{ producto.precio }}', '{{ producto.precioDolar }}', '{{ producto.SrcImagen }}')">
-                        Añadir al carrito
-                    </button>
+                        <p class="card-text">ID Producto: {{producto.id}} </p>
+                        {% if producto.stock > 0 %}
+                        <p class="card-text">Stock: {{ producto.stock }}</p>
+                        {% else %}
+                        <p class="card-text">Producto Agotado</p>
+                        {% endif %}
+                        <p class="card-text">Precio: ${{ producto.precio|floatformat:"g" }} CLP</p>
+                        <p class="card-text">Precio: ${{ producto.precioDolar }} USD</p>
+                        {% if producto.stock > 0 %}
+                        <button type="button" class="btn btn-primary" onclick="agregarAlCarrito('{{ producto.id }}', '{{ producto.nombre }}', '{{ producto.precio }}', '{{ producto.precioDolar }}', '{{ producto.SrcImagen }}')">
+                            Añadir al carrito
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-primary" disabled>
+                            Añadir al carrito
+                        </button>
+                        {% endif %}
                 </div>
             </div>
         </div>

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 
 class Categoria(models.Model):
@@ -16,6 +17,7 @@ class Marca(models.Model):
 
 class Productos(models.Model):
     id = models.IntegerField(primary_key=True)
+    stock = models.IntegerField(default=0)
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
     precio = models.FloatField()
@@ -36,6 +38,14 @@ class ItemCarrito(models.Model):
     producto = models.ForeignKey(Productos, on_delete=models.CASCADE)
     cantidad = models.IntegerField(default=1)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+
+    def clean(self):
+        if self.cantidad > self.producto.stock:
+            raise ValidationError(f"No hay suficiente stock para {self.producto.nombre}. Disponible: {self.producto.stock}")
+        
+    def save(self, *args, **kwargs):
+        self.clean()
+        super(ItemCarrito, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.producto.nombre} de {self.carrito}"
@@ -58,3 +68,22 @@ class Solicitud(models.Model):
 
     def __str__(self):
         return f' Usuario : {self.user} - {self.nombre} - {self.asunto}'
+
+class Compra(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    fecha = models.DateTimeField(auto_now_add=True)
+    total_clp = models.FloatField()
+    total_usd = models.FloatField()
+
+    def __str__(self):
+        return f"Compra {self.id} de {self.usuario.username} el {self.fecha}"
+
+class ItemCompra(models.Model):
+    compra = models.ForeignKey(Compra, related_name="items", on_delete=models.CASCADE)
+    producto = models.ForeignKey(Productos, on_delete=models.CASCADE)
+    cantidad = models.IntegerField()
+    precio_clp = models.FloatField()
+    precio_usd = models.FloatField()
+
+    def __str__(self):
+        return f"{self.cantidad} x {self.producto.nombre}"
