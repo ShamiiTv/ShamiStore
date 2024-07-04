@@ -17,7 +17,7 @@
                         <p class="card-text">Producto Agotado</p>
                         {% endif %}
                         <p class="card-text">Precio: ${{ producto.precio|floatformat:"g" }} CLP</p>
-                        <p class="card-text">Precio: ${{ producto.precioDolar }} USD</p>
+                        
                         {% if producto.stock > 0 %}
                         <button type="button" class="btn btn-primary" onclick="agregarAlCarrito('{{ producto.id }}', '{{ producto.nombre }}', '{{ producto.precio }}', '{{ producto.precioDolar }}', '{{ producto.SrcImagen }}')">
                             Añadir al carrito

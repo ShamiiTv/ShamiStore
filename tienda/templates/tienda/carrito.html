@@ -56,7 +56,6 @@
                     <h6>ID Producto: {{ item.producto.id }}</h6>
                     <h2>{{ item.producto.nombre }}</h2>
                     <p>Precio: CLP ${{ item.producto.precio|floatformat:"g" }}</p>
-                    <p>Precio USD: ${{ item.producto.precioDolar }}</p>
                     <p>Cantidad: <span id="cantidad-{{ item.id }}">{{ item.cantidad }}</span></p>
                     <button onclick="sumarCantidad('{{ item.id }}', 'sumar')" class="btn btn-primary">+</button>
                     <button onclick="restarCantidad('{{ item.id }}', 'restar')" class="btn btn-primary">-</button>

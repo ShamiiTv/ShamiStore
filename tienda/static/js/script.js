@@ -148,14 +148,12 @@ function valorDolar() {
         })
         .then(function(dailyIndicators) {
             preciodolar = dailyIndicators.dolar.valor;
-            // mostrarProductosCarrito();
         })
         .catch(function(error) {
             console.log('Error en la solicitud:', error);
         });
 }
 
-// Función para obtener y mostrar el contador del carrito actualizado
 function actualizarContadorCarrito() {
     fetch('/obtener-cantidad-carrito/')
         .then(response => {
@@ -177,7 +175,6 @@ function actualizarContadorCarrito() {
         });
 }
 
-// Llamar a actualizarContadorCarrito() al cargar la página o al realizar acciones relevantes
 document.addEventListener('DOMContentLoaded', () => {
     actualizarContadorCarrito();
 });

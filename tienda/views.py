@@ -1,16 +1,14 @@
-from django.shortcuts import render,redirect
-from django.contrib.auth import login,logout,authenticate
-from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from .models import Productos,Carrito,ItemCarrito,Solicitud,Compra,ItemCompra
 from django.shortcuts import get_object_or_404
-from .forms import *
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils.formats import localize
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from django.core.exceptions import ValidationError
+from .models import Productos, Carrito, ItemCarrito, Solicitud, Compra, ItemCompra
+from .forms import *
+import requests
 
 @login_required
 def profile(request):
@@ -26,51 +24,50 @@ def registro(request):
     else:
         registro = registroForm()
 
-    return render(request, 'tienda/registro.html', {"form":registro})
+    return render(request, 'tienda/registro.html', {"form": registro})
 
 def index(request):
-    return render(request, 'tienda/index.html',)
-
+    return render(request, 'tienda/index.html')
 
 def graficas(request):
     productos = Productos.objects.filter(categoria=1).values()
     contextGraficas = {"Graficas": productos}
-    return render(request, 'tienda/graficas.html',contextGraficas)
+    return render(request, 'tienda/graficas.html', contextGraficas)
 
 def monitores(request):
     productos = Productos.objects.filter(categoria=3).values()
     contextMonitores = {"Monitores": productos}
-    return render(request, 'tienda/monitores.html',contextMonitores)
+    return render(request, 'tienda/monitores.html', contextMonitores)
 
 def procesadores(request):
     productos = Productos.objects.filter(categoria=2).values()
     contextProcesadores = {"Procesadores": productos}
-    return render(request, 'tienda/procesadores.html',contextProcesadores)
+    return render(request, 'tienda/procesadores.html', contextProcesadores)
 
 def teclados(request):
     productos = Productos.objects.filter(categoria=4).values()
     contextTeclados = {"Teclados": productos}
-    return render(request, 'tienda/teclados.html',contextTeclados)
+    return render(request, 'tienda/teclados.html', contextTeclados)
 
 def mouses(request):
     productos = Productos.objects.filter(categoria=5).values()
     contextMouses = {"Mouses": productos}
-    return render(request, 'tienda/mouses.html',contextMouses)
+    return render(request, 'tienda/mouses.html', contextMouses)
 
 def contacto(request):
-    # Lógica para la página de contacto aquí
     return render(request, 'tienda/contacto.html')
 
 def sobrenosotros(request):
-    # Lógica para la página de sobre nosotros aquí
     return render(request, 'tienda/sobrenosotros.html')
 
 @login_required
 def carrito(request):
     carrito, created = Carrito.objects.get_or_create(usuario=request.user)
     items = carrito.items.all()
+    dolar = requests.get("https://mindicador.cl/api/dolar").json()
+    preciodolar = dolar.get('serie')[0].get('valor')
     total_clp = sum(item.producto.precio * item.cantidad for item in items)
-    total_usd = sum(item.producto.precioDolar * item.cantidad for item in items)
+    total_usd = round(total_clp / preciodolar, 2)
     return render(request, 'tienda/carrito.html', {'items': items, 'total_clp': total_clp, 'total_usd': total_usd})
 
 @login_required
@@ -94,9 +91,9 @@ def limpiar_carrito(request):
     carrito = Carrito.objects.get(usuario=request.user)
     carrito.items.all().delete()
     return redirect('carrito')
+
 def format_clp(total_clp):
     total_clp = int(total_clp)
-
     formatted = f"{total_clp:,}"
     formatted = formatted.replace(',', '.')
     return formatted
@@ -105,6 +102,8 @@ def format_clp(total_clp):
 def actualizar_cantidad(request, item_id, cantidad):
     item = get_object_or_404(ItemCarrito, id=item_id)
     carrito = item.carrito
+    dolar = requests.get("https://mindicador.cl/api/dolar").json()
+    preciodolar = dolar.get('serie')[0].get('valor')
 
     try:
         cantidad = int(cantidad)
@@ -113,7 +112,6 @@ def actualizar_cantidad(request, item_id, cantidad):
 
     nueva_cantidad = item.cantidad + cantidad
 
-    # Verificar que la nueva cantidad no exceda el stock disponible
     if nueva_cantidad > item.producto.stock:
         return JsonResponse({'error': f'No hay suficiente stock para {item.producto.nombre}. Disponible: {item.producto.stock}'}, status=400)
     
@@ -127,9 +125,9 @@ def actualizar_cantidad(request, item_id, cantidad):
 
     items = carrito.items.all()
     total_clp = sum(i.producto.precio * i.cantidad for i in items)
-    total_usd = sum(i.producto.precioDolar * i.cantidad for i in items)
+    total_usd = round(total_clp / preciodolar, 2)
     total_clp_formatted = f"Total CLP : ${format_clp(total_clp)}"
-    total_usd_formatted = f"Total USD : ${localize(total_usd)}"
+    total_usd_formatted = f"Total USD : ${total_usd:.2f}".replace(',', '.')
 
     return JsonResponse({
         'mensaje': f'Cantidad actualizada a {cantidad_actualizada}',
@@ -138,36 +136,28 @@ def actualizar_cantidad(request, item_id, cantidad):
         'total_usd': total_usd_formatted
     })
 
-
-
-
 @require_http_methods(["GET"])
 @login_required
 def obtener_cantidad_carrito(request):
-    # Obtener la cantidad total de productos en el carrito del usuario actual
     carrito_usuario = Carrito.objects.get(usuario=request.user)
     cantidad_carrito = carrito_usuario.items.count()
 
-    # Devolver los datos como JSON
     return JsonResponse({'cantidad_carrito': cantidad_carrito})
-
 
 @login_required
 def restar_cantidad(request, item_id, cantidad):
-    # Obtener el ítem del carrito, devolviendo 404 si no se encuentra
     item = get_object_or_404(ItemCarrito, id=item_id)
     carrito = item.carrito
+    dolar = requests.get("https://mindicador.cl/api/dolar").json()
+    preciodolar = dolar.get('serie')[0].get('valor')
 
-    # Convertir cantidad a entero
     try:
         cantidad = int(cantidad)
     except ValueError:
         return JsonResponse({'error': 'Cantidad no válida'}, status=400)
 
-    # Restar la cantidad especificada
     nueva_cantidad = item.cantidad - cantidad
 
-    # Si la nueva cantidad es menor a 1, eliminar el ítem
     if nueva_cantidad < 1:
         item.delete()
         cantidad_actualizada = 0
@@ -176,14 +166,12 @@ def restar_cantidad(request, item_id, cantidad):
         item.save()
         cantidad_actualizada = item.cantidad
 
-    # Calcular los nuevos totales del carrito
     items = carrito.items.all()
     total_clp = sum(i.producto.precio * i.cantidad for i in items)
-    total_usd = sum(i.producto.precioDolar * i.cantidad for i in items)
-    total_clp_formatted = f"Total CLP : ${total_clp:,.0f}".replace(",", ".")
-    total_usd_formatted = f"Total USD : ${total_usd:,.2f}".replace(",", ".")
+    total_usd = round(total_clp / preciodolar, 2)
+    total_clp_formatted = f"Total CLP : ${format_clp(total_clp)}"
+    total_usd_formatted = f"Total USD : ${total_usd:.2f}".replace(',', '.')
 
-    # Devolver una respuesta JSON con los nuevos valores
     return JsonResponse({
         'mensaje': f'Cantidad actualizada a {cantidad_actualizada}',
         'cantidad_actualizada': cantidad_actualizada,
@@ -191,24 +179,21 @@ def restar_cantidad(request, item_id, cantidad):
         'total_usd': total_usd_formatted
     })
 
-
 @login_required
 def contacto(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
             solicitud = form.save(commit=False)
-            solicitud.user = request.user  # Assign the current user
+            solicitud.user = request.user 
             solicitud.save()
             messages.success(request, 'Tu solicitud ha sido enviada exitosamente.')
-            return redirect('contacto')  # Redirect to the same page after successful submission
+            return redirect('contacto')
     else:
         form = ContactForm()
 
-    # Fetch current user's requests
     solicitudes = Solicitud.objects.filter(user=request.user)
     return render(request, 'tienda/contacto.html', {'form': form, 'solicitudes': solicitudes})
-
 
 @login_required
 def pagar(request):
@@ -216,19 +201,20 @@ def pagar(request):
     items = carrito.items.all()
     errores = []
 
-    # Verificar stock antes de proceder al pago
     for item in items:
         if item.cantidad > item.producto.stock:
             errores.append(f"No hay suficiente stock para {item.producto.nombre}. Disponible: {item.producto.stock}")
 
     if errores:
-        # Mostrar errores si no hay suficiente stock
         messages.error(request, ". ".join(errores))
         return redirect('carrito')
+    
+    dolar = requests.get("https://mindicador.cl/api/dolar").json()
+    preciodolar = dolar.get('serie')[0].get('valor')
 
-    # Descontar stock y crear la compra
     total_clp = sum(item.producto.precio * item.cantidad for item in items)
-    total_usd = sum(item.producto.precioDolar * item.cantidad for item in items)
+    total_usd = round(total_clp / preciodolar, 2)
+
     compra = Compra.objects.create(usuario=request.user, total_clp=total_clp, total_usd=total_usd)
     
     for item in items:
@@ -241,7 +227,7 @@ def pagar(request):
             producto=producto,
             cantidad=item.cantidad,
             precio_clp=item.producto.precio,
-            precio_usd=item.producto.precioDolar
+            precio_usd=round(item.producto.precio / preciodolar, 2)
         )
         
     carrito.items.all().delete()
