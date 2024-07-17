@@ -155,24 +155,16 @@ function valorDolar() {
 }
 
 function actualizarContadorCarrito() {
-    fetch('/obtener-cantidad-carrito/')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al obtener la cantidad del carrito');
-            }
-            return response.json();
-        })
-        .then(data => {
-            let contadorElemento = document.querySelector('.contador-carrito');
-            if (contadorElemento) {
-                contadorElemento.textContent = data.cantidad_carrito;
-            } else {
-                console.error('Elemento contador no encontrado');
-            }
-        })
-        .catch(error => {
-            console.error('Error: Producto con stock Limitado:', error);
-        });
+    $.ajax({
+        url: '/obtener-cantidad-carrito/',
+        type: 'GET',
+        success: function(data) {
+            $('.contador-carrito').text(data.cantidad_carrito);
+        },
+        error: function(error) {
+            console.error('Error al obtener la cantidad del carrito:', error);
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
